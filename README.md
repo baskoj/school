@@ -12,7 +12,7 @@ progress is saved in the browser's `localStorage`.
 
 ## What it covers
 
-Eight topics, unlocked in order (a topic opens once the previous one has at
+Thirteen topics, unlocked in order (a topic opens once the previous one has at
 least one star):
 
 1. **Zaokrouhlování** — rounding to tens … hundred-thousands
@@ -23,9 +23,16 @@ least one star):
 6. **Sčítání a odčítání** — multi-digit addition / subtraction
 7. **Jednotky objemu** — litres ↔ hectolitres
 8. **Jednotky hmotnosti** — t / kg / g conversions
+9. **Písemné násobení** — long multiplication (single- and two-digit multiplier)
+10. **Dělení se zbytkem** — division with remainder (two-field answer: quotient + remainder)
+11. **Pořadí operací** — order of operations with brackets
+12. **Zlomky – počítání** — adding same-denominator fractions, and a fraction of a whole
+13. **Obvod a obsah** — perimeter and area of a square / rectangle (theory, no drawing)
 
-Each run is **10 randomly generated questions**. Score earns stars: ≥ 90 % → 3,
-≥ 70 % → 2, ≥ 50 % → 1. An unfinished test can be resumed from the home screen.
+Each run is **10 randomly generated questions**, with no repeats inside a run
+and — where the topic has enough variety — different from the previous run of
+the same topic. Score earns stars: ≥ 90 % → 3, ≥ 70 % → 2, ≥ 50 % → 1. An
+unfinished test can be resumed from the home screen.
 
 ## How it's built
 

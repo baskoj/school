@@ -1,89 +1,70 @@
-# Matika-Jirka
+# Matika s medvědy
 
-A single-file, offline math-practice web app for one kid (Jirka), in Czech,
-themed around a bear band ("medvědí kapela"). Open it, pick a topic, answer
-10 questions, collect stars.
+A single-file, offline, Duolingo-style math-practice web app for one kid
+(Jirka), in Czech, themed around a bear band ("medvědí kapela"). Open it, walk
+the learning path, complete short lessons, earn crowns, keep a streak.
 
 ## Run it
 
 Open `Matika-Jirka.html` in any modern browser. No server, no build step, no
-network — everything (code, fonts, runtime) is embedded in the one file, and
-progress is saved in the browser's `localStorage`.
+network — everything (markup, styles, logic, bear artwork, sounds) lives in the
+one file. Progress is saved in the browser's `localStorage`.
+
+Hosted on GitHub Pages: <https://baskoj.github.io/school/Matika-Jirka.html>.
 
 ## What it covers
 
-Thirteen topics, unlocked in order (a topic opens once the previous one has at
-least one star):
+Thirteen math topics (whole Czech 4th-grade arithmetic), grouped into four
+units on the path:
 
-1. **Zaokrouhlování** — rounding to tens … hundred-thousands
-2. **Zlomky** — reading a fraction off a pie chart
-3. **Písemné dělení** — long division
-4. **Dělení s nulami** — dividing round numbers
-5. **Slovní úlohy** — word problems
-6. **Sčítání a odčítání** — multi-digit addition / subtraction
-7. **Jednotky objemu** — litres ↔ hectolitres
-8. **Jednotky hmotnosti** — t / kg / g conversions
-9. **Písemné násobení** — long multiplication (single- and two-digit multiplier)
-10. **Dělení se zbytkem** — division with remainder (two-field answer: quotient + remainder)
-11. **Pořadí operací** — order of operations with brackets
-12. **Zlomky – počítání** — adding same-denominator fractions, and a fraction of a whole
-13. **Obvod a obsah** — perimeter and area of a square / rectangle (theory, no drawing)
+1. **Počítání do milionu** — zaokrouhlování, sčítání a odčítání, písemné
+   násobení, písemné dělení, dělení s nulami, dělení se zbytkem, pořadí operací,
+   slovní úlohy
+2. **Zlomky** — čtení zlomku z obrázku, sčítání zlomků a část z celku
+3. **Jednotky** — objem (l/hl), hmotnost (t/kg/g)
+4. **Geometrie** — obvod a obsah čtverce a obdélníku (teorie, bez rýsování)
 
-Each run is **10 randomly generated questions**, with no repeats inside a run
-and — where the topic has enough variety — different from the previous run of
-the same topic. Score earns stars: ≥ 90 % → 3, ≥ 70 % → 2, ≥ 50 % → 1. An
-unfinished test can be resumed from the home screen.
+## How it plays (Duolingo-style)
+
+- **Learning path** — skills unlock in order; each skill is a node with lesson
+  states (locked / current / done). The current node shows a progress ring and a
+  "ZAČÍT" popover.
+- **Lessons + crowns** — each skill has 4 lessons of 5 questions. Finishing all
+  4 earns a **crown**; a skill can be leveled up to 3 crowns by redoing it.
+- **🔥 Série (streak)** — +1 the first time a lesson is completed on a new day; a
+  missed day resets it.
+- **⚡ XP + úrovně** — +10 XP per lesson (+5 for a flawless one), daily goal, level.
+- **❤️ Srdíčka (gentle)** — 5 per day, a wrong answer costs one, 3 correct in a
+  row give one back, full refill each day, and the lesson is never hard-blocked.
+- **🎉 Oslavy** — confetti, a dancing bear, and XP / streak / accuracy cards on
+  completion, plus WebAudio sound effects (no audio files) and CSS animations.
+
+Question inputs: numeric keypad, stacked-fraction entry, a two-field
+podíl/zbytek answer, and tap-choice tiles (rounding & unit topics). Each lesson
+avoids duplicate questions and, where the generator has enough variety, avoids
+repeating the previous run.
 
 ## How it's built
 
-`Matika-Jirka.html` is a **bundled artifact** produced by `dc-runtime`. It is
-not hand-edited HTML — the loader at the top of the file unpacks three embedded
-payloads:
+`Matika-Jirka.html` is a **hand-editable single file** — plain HTML + CSS +
+vanilla JavaScript, no framework and no build step. Structure inside the file:
 
-- `<script type="__bundler/manifest">` — gzip + base64 of the generated
-  `dc-runtime` React framework plus the embedded web fonts (Raveo Display / Inter
-  substitutes and JetBrains Mono). **Do not edit by hand.**
-- `<script type="__bundler/template">` — a JSON string holding the actual app:
-  declarative markup (`sc-if` / `sc-for` / `{{ }}` bindings) and the app logic.
-- `<script type="__bundler/ext_resources">` — external resource list (empty).
+- `<style>` — the design system (Duolingo-like colors, chunky 3D buttons, path,
+  lesson and celebrate screens).
+- `#app` — a single container; a tiny state machine renders `path → lesson →
+  complete` into it via `render()`, with click handling through one delegated
+  listener reading `data-act` / `data-arg`.
+- The **bear band** is inline SVG, ported 1:1 from the previous version (guitar,
+  accordion, singer — all details preserved).
+- **Question generators** (`GEN`) produce the 13 topics' questions; they are the
+  same verified generators as before, each returning a display kind
+  (`pie/expr/prose/word`) and an answer kind (`single/frac/pair/choice`).
+- State persists to `localStorage` under `matika_v2` (XP, streak, hearts, daily
+  goal, per-skill crown/lesson progress, settings, and a resumable lesson
+  session).
 
-### The app source
+To edit, just open the file and change the markup, CSS, generators, or the
+`TOPICS` / `UNITS` tables. There is nothing to rebuild.
 
-The editable source lives **inside the template payload**, as a
-`<script type="text/x-dc" data-dc-script>` block defining
-`class Component extends DCLogic`. The runtime calls `renderVals()` on every
-render to produce the values bound into the markup, plus React-style lifecycle
-hooks (`componentDidMount`, `componentDidUpdate`). The app is a small state
-machine over four screens: `home → intro → test → result`.
-
-State persisted to `localStorage`:
-
-- `medved_progress` — `{ topicId: stars }`
-- `medved_session` — the in-progress test, so it can be resumed
-
-### Editing the app
-
-Because the source is JSON-encoded inside the template payload, edit it by
-decoding, changing the `data-dc-script` block, and re-encoding with the
-bundler's exact escaping: `json.dumps(..., ensure_ascii=False)`, then escape
-every `</` as a `<` + unicode-escaped slash (see the code below) so an embedded
-`</script>` can't close the host `<script>` tag.
-
-```python
-import re, json
-
-HTML = "Matika-Jirka.html"
-src = open(HTML).read()
-pat = re.compile(r'(<script type="__bundler/template">\s*)(.*?)(\s*</script>)', re.S)
-m = pat.search(src)
-tpl = json.loads(m.group(2))                      # decoded template HTML
-
-# ... edit the data-dc-script block inside `tpl` ...
-
-enc = json.dumps(tpl, ensure_ascii=False).replace("</", "<\\u002F")
-open(HTML, "w").write(src[:m.start(2)] + enc + src[m.end(2):])
-```
-
-The manifest (runtime + fonts) is untouched by this process. To rebuild the
-runtime itself you need the original `dc-runtime` project (`bun run build`),
-which is not part of this repo.
+> The earlier version was a bundled `dc-runtime` artifact; it remains in git
+> history if ever needed.

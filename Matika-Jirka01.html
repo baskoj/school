@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#58cc02">
+<title>Matika s medvědy — finální opakování</title>
+<style>
+:root{
+  --green:#58cc02; --green-d:#48a800; --orange:#e8732a; --orange-d:#bd5811;
+  --blue:#1cb0f6; --blue-d:#1899d6; --purple:#a560f0; --purple-d:#8241c9;
+  --red:#ff4b4b; --red-d:#e63a3a; --gold:#ffc800; --gold-d:#d9a800;
+  --ink:#3c3c3c; --muted:#afafaf; --line:#e5e5e5; --panel:#f7f7f7;
+}
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none}
+html,body{height:100%}
+body{font-family:'Nunito','Baloo 2',system-ui,'Segoe UI',Arial,sans-serif; color:var(--ink);
+  background:#eef2f5; overscroll-behavior:none}
+#app{max-width:520px; margin:0 auto; min-height:100vh; background:#fff; display:flex; flex-direction:column; position:relative; overflow:hidden}
+.screen{display:flex; flex-direction:column; flex:1; min-height:100vh; animation:fade .25s ease}
+@keyframes fade{from{opacity:0} to{opacity:1}}
+
+/* buttons */
+.btn{display:block; width:100%; text-align:center; padding:15px; border-radius:16px; font-size:17px;
+  font-weight:900; color:#fff; background:var(--green); box-shadow:0 5px 0 var(--green-d);
+  cursor:pointer; letter-spacing:.03em; text-transform:uppercase; border:none; transition:transform .05s, box-shadow .05s}
+.btn:active{transform:translateY(4px); box-shadow:0 1px 0 var(--green-d)}
+.btn.grey{background:#e5e5e5; color:#afafaf; box-shadow:0 5px 0 #cfcfcf; cursor:default}
+.btn.grey:active{transform:none; box-shadow:0 5px 0 #cfcfcf}
+.btn.red{background:var(--red); box-shadow:0 5px 0 var(--red-d)}
+.btn.red:active{box-shadow:0 1px 0 var(--red-d)}
+
+/* top bar */
+.topbar{display:flex; align-items:center; gap:16px; padding:16px 20px 12px; font-weight:900}
+.stat{display:flex; align-items:center; gap:6px; font-size:19px}
+.stat .n{font-weight:900; font-variant-numeric:tabular-nums}
+.stat.flame .n{color:var(--orange)} .stat.xp .n{color:#e6a900} .stat.heart .n{color:var(--red)}
+.spacer{flex:1}
+.snd{font-size:18px; opacity:.7; cursor:pointer}
+
+/* path */
+.scroll{flex:1; overflow-y:auto; overflow-x:hidden; padding-bottom:40px}
+.unit-banner{margin:16px 16px 4px; border-radius:16px; padding:14px 18px; color:#fff;
+  display:flex; justify-content:space-between; align-items:center}
+.unit-banner .u-sec{font-size:11px; font-weight:900; opacity:.9; letter-spacing:.06em}
+.unit-banner .u-name{font-size:19px; font-weight:900; margin-top:2px}
+.unit-banner .book{font-size:22px; background:rgba(255,255,255,.22); border-radius:12px; padding:6px 10px}
+.path{position:relative; padding:14px 0 10px; --sx:64px}
+@media (max-width:459px){ .path{--sx:40px} .path .start-pop{width:min(238px,calc(100vw - 152px))} }
+@media (max-width:339px){ .path{--sx:26px} }
+.node-row{display:flex; justify-content:center; position:relative; margin:4px 0; height:100px; align-items:center}
+.node-wrap{position:relative}
+.node{width:74px; height:66px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:30px; color:#fff; cursor:pointer; font-weight:900; border:none; position:relative;
+  transition:transform .08s}
+.node:active{transform:translateY(3px)}
+.node.done{background:var(--green); box-shadow:0 7px 0 var(--green-d)}
+.node.current{background:var(--orange); box-shadow:0 7px 0 var(--orange-d)}
+.node.locked{background:#e5e5e5; box-shadow:0 6px 0 #cfcfcf; color:#b7b7b7; cursor:default}
+.node.locked:active{transform:none}
+.ring{position:absolute; inset:-9px; border-radius:50%; pointer-events:none}
+.crownbadge{position:absolute; top:-15px; left:50%; transform:translateX(-50%); font-size:16px; filter:drop-shadow(0 1px 1px rgba(0,0,0,.2))}
+.crownbadge.c2{filter:drop-shadow(0 0 4px #ffd94d)} .crownbadge.c3{filter:drop-shadow(0 0 6px #ff9d00)}
+.node-name .dn{color:#8a8a8a; letter-spacing:.07em}
+.node-name{position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:8px;
+  font-size:12px; font-weight:800; color:#777; white-space:nowrap; text-align:center; pointer-events:none}
+.node.locked ~ .node-name, .node-row.locked .node-name{color:#bcbcbc}
+.node.locked ~ .node-name .dn{color:#cacaca}
+.start-pop{position:absolute; bottom:100%; left:50%; transform:translateX(-50%); margin-bottom:14px;
+  background:#fff; border:2px solid var(--line); border-bottom-width:4px; border-radius:16px;
+  padding:12px 14px; width:238px; text-align:center; z-index:5; animation:pop .18s ease}
+@keyframes pop{from{transform:translateX(-50%) scale(.8); opacity:0} to{transform:translateX(-50%) scale(1); opacity:1}}
+.start-pop .pt{font-weight:900; font-size:15px; margin-bottom:3px}
+.start-pop .pd{font-size:11.5px; color:#7b7b7b; font-weight:800; line-height:1.35; margin:4px 2px 7px}
+.start-pop .ps{font-size:12px; color:var(--muted); font-weight:800; margin-bottom:12px}
+.start-pop:after{content:""; position:absolute; top:100%; left:50%; transform:translateX(-50%) translateY(-8px) rotate(45deg);
+  width:16px; height:16px; background:#fff; border-right:2px solid var(--line); border-bottom:2px solid var(--line)}
+.start-pop .btn{padding:11px; font-size:14px}
+
+/* stage scene (bear band) */
+.stage{position:relative; height:190px; background:linear-gradient(#f3efc2,#e9ecb6); overflow:hidden}
+.stage .side{position:absolute; top:0; width:56px; height:100%}
+.stage .side.l{left:0; background:linear-gradient(90deg,#d6338c,#e85aa6); border-bottom-right-radius:36px}
+.stage .side.r{right:0; background:linear-gradient(270deg,#d6338c,#e85aa6); border-bottom-left-radius:36px}
+.stage .grass{position:absolute; bottom:0; left:0; right:0; height:58px; background:#46d000}
+.stage .b{position:absolute; bottom:22px}
+.stage .b.g{left:20%; width:78px} .stage .b.s{left:50%; transform:translateX(-50%); width:92px; bottom:12px}
+.stage .b.a{right:20%; width:78px}
+.stage .b.s.bounce{animation:bhop 1.6s ease-in-out infinite}
+@keyframes bhop{0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-8px)}}
+.bear{display:block; width:100%; height:auto}
+.hello{padding:16px 22px 2px}
+.hello .k{font-size:12px; font-weight:900; letter-spacing:.08em; color:var(--muted); text-transform:uppercase}
+.hello .t{font-size:26px; font-weight:900; color:#2b2b2b; margin-top:2px}
+.hello .lead{font-size:13px; font-weight:800; color:#8a8a8a; line-height:1.4; margin-top:6px}
+.done-all{margin:18px 16px 26px; border-radius:16px; padding:16px 18px; text-align:center;
+  background:#fff8dd; border:2px solid #ffe083; border-bottom-width:4px}
+.done-all .dt{font-size:17px; font-weight:900; color:#c99a00}
+.done-all .ds{font-size:12.5px; font-weight:800; color:#a08430; margin-top:4px; line-height:1.4}
+
+/* lesson */
+.lhead{display:flex; align-items:center; gap:14px; padding:16px 18px 10px}
+.quit{font-size:24px; color:var(--muted); font-weight:900; cursor:pointer; line-height:1}
+.pbar{flex:1; height:15px; background:#e5e5e5; border-radius:99px; overflow:hidden}
+.pbar>i{display:block; height:100%; background:var(--green); border-radius:99px; transition:width .3s ease}
+.lbody{flex:1; padding:6px 22px 0; display:flex; flex-direction:column; overflow-y:auto}
+.chiprow{display:flex; align-items:center; gap:10px; margin:8px 0 4px}
+.chip{background:#ede7fb; color:#7a49c4; font-size:11px; font-weight:900; letter-spacing:.07em;
+  text-transform:uppercase; padding:5px 11px; border-radius:99px; white-space:nowrap}
+.daytag{margin-left:auto; font-size:11px; font-weight:900; color:var(--muted); letter-spacing:.04em; white-space:nowrap}
+.kicker{font-size:21px; font-weight:900; margin:6px 0 18px}
+.qbear{display:flex; align-items:flex-start; gap:10px; margin-bottom:18px}
+.qbear .bh{width:64px; flex:none}
+.bubble{background:#fff; border:2px solid var(--line); border-radius:16px; padding:11px 15px;
+  font-weight:800; font-size:14px; position:relative; color:#4b4b4b}
+.bubble:before{content:""; position:absolute; left:-9px; top:16px; width:14px; height:14px; background:#fff;
+  border-left:2px solid var(--line); border-bottom:2px solid var(--line); transform:rotate(45deg)}
+.qexpr{font-size:42px; font-weight:900; text-align:center; letter-spacing:.01em; margin:18px 0 6px; font-variant-numeric:tabular-nums; color:#2b2b2b}
+.qprose{font-size:24px; font-weight:900; text-align:center; line-height:1.3; margin:16px 0; color:#2b2b2b}
+.qword{font-size:17px; font-weight:800; line-height:1.5; background:var(--panel); border:1px solid var(--line);
+  border-radius:16px; padding:16px 18px; margin:6px 0 10px; color:#3c3c3c}
+.pie{display:block; margin:10px auto 6px}
+/* answer areas */
+.ansbox{margin:18px auto 8px; min-width:190px; text-align:center; font-size:32px; font-weight:900;
+  border:2px solid var(--line); border-radius:16px; padding:12px 24px; font-variant-numeric:tabular-nums; color:#2b2b2b}
+.frac{display:flex; flex-direction:column; align-items:center; gap:6px; margin:16px 0 6px}
+.field{width:100px; height:52px; display:flex; align-items:center; justify-content:center; border-radius:12px;
+  background:var(--panel); font-size:26px; font-weight:900; font-variant-numeric:tabular-nums; cursor:pointer;
+  border:2px solid var(--line); color:#2b2b2b}
+.field.act{border-color:var(--orange)}
+.fbar{width:118px; height:4px; background:#2b2b2b; border-radius:2px}
+.pair{display:flex; justify-content:center; gap:22px; margin:16px 0 6px}
+.pair .col{display:flex; flex-direction:column; align-items:center; gap:5px}
+.pair .lab{font-size:12px; font-weight:900; color:var(--muted)}
+.tiles{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0 6px}
+.tile{border:2px solid var(--line); border-bottom-width:4px; border-radius:16px; padding:18px; text-align:center;
+  font-size:23px; font-weight:900; cursor:pointer; font-variant-numeric:tabular-nums; color:#2b2b2b; transition:transform .05s}
+.tile:active{transform:translateY(3px)}
+.tile.sel{border-color:var(--blue); background:#ddf4ff; color:var(--blue-d)}
+/* keypad */
+.pad{display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px; margin-top:auto; padding-top:12px}
+.key{background:#fff; border:2px solid var(--line); border-bottom-width:4px; border-radius:14px; padding:13px 0;
+  text-align:center; font-size:23px; font-weight:900; cursor:pointer; color:#2b2b2b; transition:transform .05s}
+.key:active{transform:translateY(3px)}
+.footer{padding:14px 22px 24px}
+/* feedback sheet */
+.sheet{padding:16px 22px 22px; animation:up .2s ease}
+@keyframes up{from{transform:translateY(30px)} to{transform:translateY(0)}}
+.sheet.good{background:#d7ffb8; border-top:2px solid #a8e26a}
+.sheet.bad{background:#ffdfe0; border-top:2px solid #ffb3b3}
+.sheet .st{display:flex; align-items:center; gap:8px; font-size:19px; font-weight:900; margin-bottom:6px}
+.sheet.good .st{color:#58a700} .sheet.bad .st{color:#ea2b2b}
+.sheet .sol{font-weight:800; font-size:14px; color:#4b4b4b; margin-bottom:12px}
+
+/* celebrate */
+.celebrate{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px 26px; position:relative; overflow:hidden}
+.confetti{position:absolute; inset:0; pointer-events:none}
+.confetti span{position:absolute; width:10px; height:14px; border-radius:2px; top:-20px; animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(720px) rotate(540deg); opacity:.9}}
+.cel-bear{width:150px; margin-bottom:6px}
+.cel-title{font-size:28px; font-weight:900; color:var(--gold); text-transform:uppercase; letter-spacing:.02em}
+.cel-sub{color:var(--muted); font-weight:800; margin:4px 0 24px}
+.cel-stats{display:flex; gap:12px; width:100%; max-width:360px}
+.cel-card{flex:1; border-radius:16px; padding:2.5px}
+.cel-card.g{background:var(--gold)} .cel-card.o{background:var(--orange)} .cel-card.b{background:var(--blue)}
+.cel-card .in{background:#fff; border-radius:14px; padding:9px 4px}
+.cel-card .lab{font-size:10px; font-weight:900; letter-spacing:.04em}
+.cel-card.g .lab{color:#c99a00} .cel-card.o .lab{color:var(--orange-d)} .cel-card.b .lab{color:var(--blue-d)}
+.cel-card .val{font-size:22px; font-weight:900; display:flex; align-items:center; justify-content:center; gap:3px; margin-top:2px}
+.crown-pop{font-size:60px; margin-bottom:6px; animation:cpop .5s ease both}
+@keyframes cpop{0%{transform:scale(0) rotate(-30deg)} 70%{transform:scale(1.25) rotate(8deg)} 100%{transform:scale(1) rotate(0)}}
+
+.shake{animation:shk .3s}
+@keyframes shk{0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+// ===================== bear artwork (ported 1:1 from the old app) ==========
+const BEAR_GUITAR = `<svg viewBox="0 0 120 150" class="bear bear-guitar"><rect x="44" y="78" width="14" height="40" fill="#3a2412"></rect><rect x="62" y="78" width="14" height="40" fill="#e8732a"></rect> <ellipse cx="51" cy="122" rx="13" ry="6" fill="#222"></ellipse><ellipse cx="69" cy="122" rx="13" ry="6" fill="#222"></ellipse> <rect x="40" y="56" width="40" height="34" rx="14" fill="#e8732a"></rect> <rect x="48" y="6" width="24" height="16" fill="#1f53d6"></rect> <circle cx="38" cy="34" r="11" fill="#e8732a"></circle><circle cx="82" cy="34" r="11" fill="#e8732a"></circle> <circle cx="60" cy="38" r="26" fill="#e8732a"></circle> <ellipse cx="60" cy="47" rx="14" ry="11" fill="#f7cfa3"></ellipse> <circle cx="52" cy="34" r="3" fill="#3a2412"></circle><circle cx="68" cy="34" r="3" fill="#3a2412"></circle> <ellipse cx="60" cy="42" rx="4" ry="3" fill="#3a2412"></ellipse> <polygon points="78,64 116,92 110,100 74,78" fill="#e0b06a" stroke="#3a2412" stroke-width="2"></polygon></svg>`;
+const BEAR_SINGER = `<svg viewBox="0 0 120 150" class="bear bear-singer"><rect x="40" y="92" width="15" height="34" fill="#ff5a1f"></rect><rect x="64" y="86" width="15" height="40" fill="#3a2412"></rect> <ellipse cx="40" cy="128" rx="13" ry="6" fill="#222"></ellipse><ellipse cx="78" cy="128" rx="13" ry="6" fill="#222"></ellipse> <rect x="42" y="66" width="36" height="34" rx="14" fill="#1f53d6"></rect> <rect x="46" y="60" width="28" height="14" rx="4" fill="#ff5a1f"></rect> <rect x="48" y="2" width="24" height="20" rx="3" fill="#e8732a"></rect> <circle cx="36" cy="36" r="12" fill="#e8732a"></circle><circle cx="84" cy="36" r="12" fill="#e8732a"></circle> <circle cx="60" cy="40" r="28" fill="#e8732a"></circle> <ellipse cx="60" cy="50" rx="15" ry="12" fill="#f7cfa3"></ellipse> <circle cx="51" cy="36" r="3.2" fill="#3a2412"></circle><circle cx="69" cy="36" r="3.2" fill="#3a2412"></circle> <ellipse cx="60" cy="45" rx="4.5" ry="3.2" fill="#3a2412"></ellipse> <path d="M53 51 Q60 58 67 51" stroke="#3a2412" stroke-width="2.4" fill="none" stroke-linecap="round"></path></svg>`;
+const BEAR_ACCORDION = `<svg viewBox="0 0 120 150" class="bear bear-accordion"><rect x="46" y="80" width="14" height="38" fill="#e8732a"></rect><rect x="64" y="80" width="14" height="38" fill="#3a2412"></rect> <ellipse cx="53" cy="122" rx="13" ry="6" fill="#222"></ellipse><ellipse cx="71" cy="122" rx="13" ry="6" fill="#222"></ellipse> <rect x="42" y="58" width="40" height="32" rx="14" fill="#e8732a"></rect> <rect x="46" y="4" width="22" height="16" rx="2" fill="#5b6b2a"></rect> <circle cx="40" cy="34" r="11" fill="#e8732a"></circle><circle cx="80" cy="34" r="11" fill="#e8732a"></circle> <circle cx="60" cy="38" r="26" fill="#e8732a"></circle> <ellipse cx="60" cy="47" rx="14" ry="11" fill="#f7cfa3"></ellipse> <circle cx="52" cy="34" r="3" fill="#3a2412"></circle><circle cx="68" cy="34" r="3" fill="#3a2412"></circle> <ellipse cx="60" cy="42" rx="4" ry="3" fill="#3a2412"></ellipse> <rect x="22" y="66" width="12" height="26" rx="3" fill="#f2d23a"></rect> <rect x="42" y="66" width="12" height="26" rx="3" fill="#dbe3ec"></rect> <path d="M34 70 l8 -2 0 22 -8 2z" fill="#fff" stroke="#3a2412" stroke-width="1.5"></path></svg>`;
+
+// ===================== helpers =============================================
+function fmt(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' '); }
+function rnd(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function dstr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function today(){ return dstr(new Date()); }
+function yesterday(){ const d=new Date(); d.setDate(d.getDate()-1); return dstr(d); }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// SVG pie: d slices, first s filled.
+function piePaths(d,s){
+  const cx=50,cy=50,r=46,arr=[];
+  for(let i=0;i<d;i++){
+    const a0=(-90+i*360/d)*Math.PI/180, a1=(-90+(i+1)*360/d)*Math.PI/180;
+    const x0=(cx+r*Math.cos(a0)).toFixed(2), y0=(cy+r*Math.sin(a0)).toFixed(2);
+    const x1=(cx+r*Math.cos(a1)).toFixed(2), y1=(cy+r*Math.sin(a1)).toFixed(2);
+    const large=(360/d)>180?1:0;
+    arr.push('<path d="M '+cx+' '+cy+' L '+x0+' '+y0+' A '+r+' '+r+' 0 '+large+' 1 '+x1+' '+y1+' Z" fill="'+(i<s?'#e8732a':'#f3ede2')+'" stroke="#fff" stroke-width="1.6"></path>');
+  }
+  return arr.join('');
+}
+
+// ===================== question generators (ported, verified) ==============
+const GEN = {
+  zaokr(){
+    const places=[{n:'desítky',v:10,lo:30,hi:990},{n:'stovky',v:100,lo:350,hi:9900},
+      {n:'tisíce',v:1000,lo:3500,hi:99000},{n:'desetitisíce',v:10000,lo:35000,hi:990000},
+      {n:'statisíce',v:100000,lo:350000,hi:1900000}];
+    const p=places[rnd(0,places.length-1)], num=rnd(p.lo,p.hi);
+    return {disp:'prose',ans:'single',text:'Zaokrouhli '+fmt(num)+' na '+p.n,answer:Math.round(num/p.v)*p.v};
+  },
+  zlomky(){ const d=rnd(2,8), s=rnd(1,d-1); return {disp:'pie',ans:'frac',pie:piePaths(d,s),answerNum:s,answerDen:d}; },
+  deleni(){ const dv=rnd(2,9), q=rnd(112,9899); return {disp:'expr',ans:'single',text:fmt(dv*q)+' : '+dv,answer:q}; },
+  nuly(){ const res=rnd(2,9)*Math.pow(10,rnd(0,2)), div=rnd(1,9)*Math.pow(10,rnd(1,3));
+    return {disp:'expr',ans:'single',text:fmt(res*div)+' : '+fmt(div),answer:res}; },
+  slovni(){
+    const t=rnd(0,4);
+    if(t===0){const a=rnd(1200,9500),dd=rnd(3,9);return{disp:'word',ans:'single',text:'Medvědí pekárna upeče '+fmt(a)+' koláčů denně. Kolik koláčů upeče za '+dd+' dní?',answer:a*dd};}
+    if(t===1){const a=rnd(1500,8000),b=rnd(1500,8000),dd=rnd(2,6);return{disp:'word',ans:'single',text:'První dílna vyrobí '+fmt(a)+' hraček a druhá '+fmt(b)+' hraček denně. Kolik vyrobí obě dohromady za '+dd+' dní?',answer:(a+b)*dd};}
+    if(t===2){const k=rnd(3,8),per=rnd(120,900);return{disp:'word',ans:'single',text:'Do '+k+' beden rozdělíme rovným dílem '+fmt(per*k)+' jablek. Kolik jablek je v jedné bedně?',answer:per};}
+    if(t===3){const price=rnd(12,90),k=rnd(20,80);return{disp:'word',ans:'single',text:'Jeden míček stojí '+price+' Kč. Kolik zaplatíš za '+k+' míčků?',answer:price*k};}
+    const total=rnd(2,9)*1000+rnd(0,9)*100,sold=rnd(200,900);
+    return{disp:'word',ans:'single',text:'Ve skladu bylo '+fmt(total)+' kusů. Prodalo se '+fmt(sold)+'. Kolik kusů zbylo?',answer:total-sold};
+  },
+  scitani(){
+    if(rnd(0,1)===0){const a=rnd(12000,799999),b=rnd(2000,99999);return{disp:'expr',ans:'single',text:fmt(a)+' + '+fmt(b),answer:a+b};}
+    const a=rnd(120000,899999),b=rnd(11000,a-1000);return{disp:'expr',ans:'single',text:fmt(a)+' − '+fmt(b),answer:a-b};
+  },
+  objem(){
+    if(rnd(0,1)===0){const x=rnd(2,90);return{disp:'expr',ans:'single',text:x+' hl = ? l',answer:x*100};}
+    const x=rnd(2,90)*100;return{disp:'expr',ans:'single',text:fmt(x)+' l = ? hl',answer:x/100};
+  },
+  hmotnost(){
+    const r=rnd(0,3);
+    if(r===0){const x=rnd(2,90);return{disp:'expr',ans:'single',text:x+' t = ? kg',answer:x*1000};}
+    if(r===1){const x=rnd(2,90);return{disp:'expr',ans:'single',text:x+' kg = ? g',answer:x*1000};}
+    if(r===2){const x=rnd(2,90);return{disp:'expr',ans:'single',text:fmt(x*1000)+' kg = ? t',answer:x};}
+    const x=rnd(2,90);return{disp:'expr',ans:'single',text:fmt(x*1000)+' g = ? kg',answer:x};
+  },
+  nasobeni(){
+    if(rnd(0,1)===0){const a=rnd(112,9999),b=rnd(2,9);return{disp:'expr',ans:'single',text:fmt(a)+' · '+b,answer:a*b};}
+    const a=rnd(112,899),b=rnd(11,89);return{disp:'expr',ans:'single',text:fmt(a)+' · '+b,answer:a*b};
+  },
+  zbytek(){
+    const dv=rnd(3,9),q=rnd(112,9899),r=rnd(0,dv-1);
+    return{disp:'expr',ans:'pair',label1:'podíl',label2:'zbytek',text:fmt(q*dv+r)+' : '+dv,answer1:q,answer2:r};
+  },
+  poradi(){
+    const t=rnd(0,3);
+    if(t===0){const a=rnd(2,9),b=rnd(2,9),c=rnd(2,9);return{disp:'expr',ans:'single',text:'('+a+' + '+b+') · '+c,answer:(a+b)*c};}
+    if(t===1){const a=rnd(2,9),b=rnd(2,9),c=rnd(2,9);return{disp:'expr',ans:'single',text:a+' · ('+b+' + '+c+')',answer:a*(b+c)};}
+    if(t===2){const a=rnd(2,9),b=rnd(3,9),c=rnd(1,b-1);return{disp:'expr',ans:'single',text:a+' · ('+b+' − '+c+')',answer:a*(b-c)};}
+    const a=rnd(2,9),b=rnd(2,9),c=rnd(2,9);return{disp:'expr',ans:'single',text:a+' + '+b+' · '+c,answer:a+b*c};
+  },
+  zlomkypoc(){
+    if(rnd(0,1)===0){
+      const den=rnd(4,10),n1=rnd(1,den-2),n2=rnd(1,den-1-n1);
+      return{disp:'expr',ans:'frac',text:n1+'/'+den+' + '+n2+'/'+den+' =',answerNum:n1+n2,answerDen:den};
+    }
+    const den=rnd(2,6),num=rnd(1,den-1),whole=den*rnd(3,20);
+    return{disp:'prose',ans:'single',text:'Kolik je '+num+'/'+den+' z '+fmt(whole)+'?',answer:num*(whole/den)};
+  },
+  geometrie(){
+    const t=rnd(0,3);
+    if(t===0){const a=rnd(2,20);return{disp:'prose',ans:'single',text:'Obvod čtverce se stranou '+a+' cm? (v cm)',answer:4*a};}
+    if(t===1){const a=rnd(2,20);return{disp:'prose',ans:'single',text:'Obsah čtverce se stranou '+a+' cm? (v cm²)',answer:a*a};}
+    if(t===2){const a=rnd(2,20),b=rnd(2,20);return{disp:'prose',ans:'single',text:'Obvod obdélníku se stranami '+a+' cm a '+b+' cm? (v cm)',answer:2*(a+b)};}
+    const a=rnd(2,20),b=rnd(2,20);return{disp:'prose',ans:'single',text:'Obsah obdélníku se stranami '+a+' cm a '+b+' cm? (v cm²)',answer:a*b};
+  },
+};
+
+// Topic metadata (the 13 topics from Matika-Jirka.html) — hint, label and answer style.
+const TOPIC_META = {
+  zaokr:     {name:'Zaokrouhlování',     hint:'Podívej se na řád a číslici vpravo od něj.', choice:true},
+  scitani:   {name:'Sčítání a odčítání', hint:'Zarovnej pod sebe a počítej zprava.'},
+  nasobeni:  {name:'Písemné násobení',   hint:'Násob po číslicích a řádky posuň doleva.'},
+  deleni:    {name:'Písemné dělení',     hint:'Děl po řádech zleva. Na konci udělej zkoušku.'},
+  nuly:      {name:'Dělení s nulami',    hint:'Škrtni stejně nul dole i nahoře.'},
+  zbytek:    {name:'Dělení se zbytkem',  hint:'Zbytek je vždy menší než dělitel.'},
+  poradi:    {name:'Pořadí operací',     hint:'Nejdřív závorky, pak násobení a dělení.'},
+  slovni:    {name:'Slovní úlohy',       hint:'Najdi otázku a čísla, pak teprve počítej.'},
+  zlomky:    {name:'Zlomky',             hint:'Dole počet dílů, nahoře vybarvené.'},
+  zlomkypoc: {name:'Zlomky – počítání',  hint:'Stejný jmenovatel opiš, sčítej jen čitatele.'},
+  objem:     {name:'Jednotky objemu',    hint:'1 hektolitr = 100 litrů.', choice:true},
+  hmotnost:  {name:'Jednotky hmotnosti', hint:'1 t = 1000 kg, 1 kg = 1000 g.', choice:true},
+  geometrie: {name:'Obvod a obsah',      hint:'Obvod = strany sečti, obsah = vynásob.'},
+};
+
+// Six days of final revision. `mix` = topic id -> how many slots it gets in the day's bag.
+// Order = unlock order; day N opens once day N-1 has a crown.
+const DAYS = [
+  {id:'den1', n:1, name:'Sčítání a odčítání',   glyph:'+−',
+   sub:'Zaokrouhlování, sčítání, odčítání a slovní úlohy.',
+   mix:{scitani:2, zaokr:2, slovni:1}},
+  {id:'den2', n:2, name:'Násobení a dělení',    glyph:'×÷',
+   sub:'Písemné násobení, písemné dělení a dělení s nulami.',
+   mix:{nasobeni:2, deleni:2, nuly:1}},
+  {id:'den3', n:3, name:'Zbytky a závorky',     glyph:'()',
+   sub:'Dělení se zbytkem, pořadí operací a slovní úlohy.',
+   mix:{zbytek:2, poradi:2, slovni:1}},
+  {id:'den4', n:4, name:'Zlomky',               glyph:'½',
+   sub:'Zlomek z obrázku, sčítání zlomků a část z celku, plus dělení na oživení.',
+   mix:{zlomky:2, zlomkypoc:2, deleni:1}},
+  {id:'den5', n:5, name:'Jednotky a geometrie', glyph:'kg',
+   sub:'Litry a hektolitry, tuny, kilogramy a gramy, obvod a obsah.',
+   mix:{objem:2, hmotnost:2, geometrie:2}},
+  {id:'den6', n:6, name:'Velký mix',            glyph:'🏆',
+   sub:'Všech 13 témat dohromady. Finále celého opakování.',
+   mix:{zaokr:1, scitani:1, nasobeni:1, deleni:1, nuly:1, zbytek:1, poradi:1, slovni:1,
+        zlomky:1, zlomkypoc:1, objem:1, hmotnost:1, geometrie:1}},
+];
+const D_BY_ID = Object.fromEntries(DAYS.map(d=>[d.id,d]));
+const D_INDEX = Object.fromEntries(DAYS.map((d,i)=>[d.id,i]));
+
+const LESSONS_PER_CROWN = 4;
+const QUESTIONS_PER_LESSON = 5;
+const DAILY_GOAL = 20;
+
+// ===================== state / persistence =================================
+const KEY='matika_final_v1';
+let S = load();
+function load(){
+  let s=null; try{ s=JSON.parse(localStorage.getItem(KEY)); }catch(e){}
+  if(!s||typeof s!=='object') s={};
+  s.xp=s.xp||0;
+  s.streak=s.streak||{count:0,lastDate:''};
+  s.hearts=s.hearts||{count:5,date:''};
+  s.daily=s.daily||{date:'',xp:0};
+  s.days=s.days||{};
+  s.bags=s.bags||{};
+  s.recent=s.recent||{};
+  s.settings=s.settings||{sound:true};
+  s.session=s.session||null;
+  DAYS.forEach(d=>{ if(!s.days[d.id]) s.days[d.id]={crown:0,lesson:0}; });
+  return s;
+}
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+function rolloverDaily(){
+  const d=today();
+  if(S.hearts.date!==d){ S.hearts={count:5,date:d}; }
+  if(S.daily.date!==d){ S.daily={date:d,xp:0}; }
+  save();
+}
+function level(){ return Math.floor(S.xp/100)+1; }
+function isUnlocked(id){
+  const i=D_INDEX[id];
+  if(i===0) return true;
+  const prev=DAYS[i-1].id;
+  return (S.days[prev].crown||0)>=1;
+}
+function allDone(){ return DAYS.every(d=>(S.days[d.id].crown||0)>=1); }
+
+// ===================== sounds (WebAudio) ===================================
+let AC=null;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return AC; }
+function tone(freq,dur,type,when,vol){
+  const c=ac(); if(!c||!S.settings.sound) return;
+  const o=c.createOscillator(), g=c.createGain(); const t0=c.currentTime+(when||0);
+  o.type=type||'sine'; o.frequency.value=freq;
+  g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(vol||0.15,t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0+dur+0.02);
+}
+function sndTap(){ tone(320,0.05,'square',0,0.05); }
+function sndCorrect(){ tone(660,0.12,'sine',0,0.14); tone(880,0.16,'sine',0.09,0.14); }
+function sndWrong(){ tone(200,0.18,'sawtooth',0,0.09); tone(150,0.22,'sawtooth',0.05,0.09); }
+function sndComplete(){ [523,659,784,1047].forEach((f,i)=>tone(f,0.22,'triangle',i*0.11,0.16)); }
+
+// ===================== view / transient UI state ===========================
+let V = { screen:'path', selected:null, L:null, C:null };
+
+// If a session was saved mid-lesson, resume it.
+function maybeResume(){
+  if(S.session && S.session.topicId && Array.isArray(S.session.questions)){
+    V.L = S.session; V.screen='lesson';
+  }
+}
+
+// ===================== lesson lifecycle ====================================
+function makeChoice(a){
+  const s=Math.max(1,Math.round(Math.abs(a)*0.1));
+  const pool=[a+s,a-s,a+2*s,a-2*s,a+1,a-1,a*10,Math.round(a/10)];
+  const opts=[];
+  for(const c of pool){ if(c!==a && c>0 && !opts.includes(c)){ opts.push(c); if(opts.length>=3) break; } }
+  let k=2; while(opts.length<3){ const c=a+k; if(c>0&&c!==a&&!opts.includes(c)) opts.push(c); k++; }
+  return shuffle([a,...opts]);
+}
+// ---- topic bag ------------------------------------------------------------
+// Each day keeps a shuffled bag of topic slots. A lesson draws from it and the
+// bag only refills once empty, so every topic of the day shows up before any
+// topic comes round a second time (day 6: all 13 before a single repeat).
+function refillBag(day){
+  const bag=[];
+  for(const tid in day.mix){ for(let k=0;k<day.mix[tid];k++) bag.push(tid); }
+  return shuffle(bag);
+}
+function nextTopics(day,n){
+  let bag = Array.isArray(S.bags[day.id]) ? S.bags[day.id].slice() : [];
+  const out=[];
+  while(out.length<n){
+    if(!bag.length) bag=refillBag(day);
+    out.push(bag.shift());
+  }
+  S.bags[day.id]=bag;
+  return out;
+}
+// Reorder so the same topic never sits next to itself unless the draw makes it
+// unavoidable. Always take the most frequent topic that is not the previous one
+// — picking merely "any other one" leaves the leftovers stacked at the end.
+function spread(arr){
+  const pool=arr.slice(), out=[];
+  while(pool.length){
+    const count={};
+    for(const x of pool) count[x]=(count[x]||0)+1;
+    const last=out.length?out[out.length-1]:null;
+    let pick=-1, best=-1;
+    for(let i=0;i<pool.length;i++){
+      if(pool[i]===last) continue;
+      if(count[pool[i]]>best){ best=count[pool[i]]; pick=i; }
+    }
+    if(pick<0) pick=0;               // nothing but `last` left — repeat is forced
+    out.push(pool.splice(pick,1)[0]);
+  }
+  return out;
+}
+
+function buildLesson(id){
+  const day=D_BY_ID[id];
+  // nextTopics() consumes the bag straight away, so remember what it looked like:
+  // a lesson the kid abandons must not eat that day's topic draws.
+  const bagBefore=(S.bags[id]||[]).slice(), recentBefore=(S.recent[id]||[]).slice();
+  const topics=spread(nextTopics(day,QUESTIONS_PER_LESSON));
+  const prev=new Set(S.recent[id]||[]);      // asked earlier today — avoid if we can
+  const seen=new Set(), qs=[];
+  const sig=q=> q.text ? (q.topic+'|'+q.disp+'|'+q.text)
+                       : (q.topic+'|frac|'+q.answerNum+'/'+q.answerDen);
+  topics.forEach(tid=>{
+    const gen=GEN[tid], meta=TOPIC_META[tid];
+    let q=null;
+    // pass 0 avoids both this lesson and recent ones; pass 1 only this lesson.
+    for(let pass=0; pass<2 && !q; pass++){
+      for(let n=0;n<300;n++){
+        const c=gen(); c.topic=tid;
+        const g=sig(c);
+        if(seen.has(g)) continue;
+        if(pass===0 && prev.has(g)) continue;
+        seen.add(g); q=c; break;
+      }
+    }
+    if(!q){ q=gen(); q.topic=tid; seen.add(sig(q)); }
+    q.name=meta.name; q.hint=meta.hint;
+    if(meta.choice && q.ans==='single'){ q.ans='choice'; q.options=makeChoice(q.answer); }
+    qs.push(q);
+  });
+  const keep=Array.from(new Set([...(S.recent[id]||[]), ...seen]));
+  S.recent[id]=keep.slice(Math.max(0,keep.length-80));
+  return {topicId:id, bagBefore:bagBefore, recentBefore:recentBefore,
+          questions:qs, qi:0, input:'', input2:'', activeField:'num', choiceSel:null,
+          hearts:S.hearts.count, correctStreak:0, correctCount:0, phase:'answering', feedback:null};
+}
+function startLesson(id){
+  ac(); V.selected=null;
+  V.L = buildLesson(id);
+  S.session = V.L; save();
+  V.screen='lesson'; render();
+}
+function quitLesson(){
+  // hand the drawn topics back so an abandoned lesson costs the day nothing
+  if(V.L && Array.isArray(V.L.bagBefore)) S.bags[V.L.topicId]=V.L.bagBefore.slice();
+  if(V.L && Array.isArray(V.L.recentBefore)) S.recent[V.L.topicId]=V.L.recentBefore.slice();
+  S.session=null; save(); V.L=null; V.screen='path'; render();
+}
+
+function curQ(){ return V.L.questions[V.L.qi]; }
+
+function grade(q,L){
+  if(q.ans==='frac'){ return {ok: parseInt(L.input,10)===q.answerNum && parseInt(L.input2,10)===q.answerDen,
+     your:(L.input||'?')+'/'+(L.input2||'?'), correct:q.answerNum+'/'+q.answerDen}; }
+  if(q.ans==='pair'){ return {ok: parseInt(L.input,10)===q.answer1 && parseInt(L.input2,10)===q.answer2,
+     your:(L.input===''?'—':fmt(parseInt(L.input,10)))+' zb. '+(L.input2===''?'—':L.input2), correct:fmt(q.answer1)+' zb. '+q.answer2}; }
+  if(q.ans==='choice'){ return {ok: L.choiceSel===q.answer, your:L.choiceSel==null?'—':fmt(L.choiceSel), correct:fmt(q.answer)}; }
+  const y=parseInt(L.input,10);
+  return {ok: !isNaN(y)&&y===q.answer, your:L.input===''?'—':fmt(y), correct:fmt(q.answer)};
+}
+function canCheck(){
+  const L=V.L, q=curQ();
+  if(q.ans==='choice') return L.choiceSel!=null;
+  if(q.ans==='frac'||q.ans==='pair') return L.input!==''&&L.input2!=='';
+  return L.input!=='';
+}
+function doCheck(){
+  const L=V.L, q=curQ(); const r=grade(q,L);
+  L.feedback=r; L.phase='feedback';
+  if(r.ok){ L.correctCount++; L.correctStreak++; if(L.correctStreak%3===0 && S.hearts.count<5){ S.hearts.count++; L.hearts=S.hearts.count; } sndCorrect(); }
+  else { L.correctStreak=0; if(S.hearts.count>0){ S.hearts.count--; L.hearts=S.hearts.count; } sndWrong(); }
+  save(); render();
+}
+function afterFeedback(){
+  const L=V.L;
+  if(L.qi+1>=L.questions.length){ finishLesson(); return; }
+  L.qi++; L.input=''; L.input2=''; L.activeField='num'; L.choiceSel=null; L.phase='answering'; L.feedback=null;
+  S.session=L; save(); render();
+}
+function finishLesson(){
+  const L=V.L, id=L.topicId;
+  const acc=Math.round(L.correctCount/L.questions.length*100);
+  const flawless=L.correctCount===L.questions.length;
+  const xpGain=10+(flawless?5:0);
+  S.xp+=xpGain; if(S.daily.date!==today()) S.daily={date:today(),xp:0}; S.daily.xp+=xpGain;
+  // streak
+  if(S.streak.lastDate!==today()){ S.streak.count = (S.streak.lastDate===yesterday()? S.streak.count+1 : 1); S.streak.lastDate=today(); }
+  // crown / lesson progress
+  const sk=S.days[id]; let crownUp=false; sk.lesson++;
+  if(sk.lesson>=LESSONS_PER_CROWN){ sk.lesson=0; if(sk.crown<3){ sk.crown++; } crownUp=true; }
+  S.session=null; save();
+  V.C={xp:xpGain, acc:acc, streak:S.streak.count, crownUp:crownUp, crown:sk.crown,
+       day:D_BY_ID[id], allDone:allDone()};
+  V.L=null; V.screen='complete'; sndComplete(); render();
+}
+
+// ===================== rendering ===========================================
+function h(html){ return html; }
+
+function topbar(){
+  return `<div class="topbar">
+    <div class="stat flame">🔥<span class="n">${S.streak.count}</span></div>
+    <div class="stat xp">⚡<span class="n">${S.xp}</span></div>
+    <div class="spacer"></div>
+    <div class="snd" data-act="snd">${S.settings.sound?'🔊':'🔈'}</div>
+    <div class="stat heart">❤️<span class="n">${S.hearts.count}</span></div>
+  </div>`;
+}
+
+function renderPath(){
+  // current day = first unlocked day that has not been crowned yet
+  let current=null;
+  for(const d of DAYS){ if(isUnlocked(d.id) && (S.days[d.id].crown||0)===0){ current=d.id; break; } }
+  let html=`<div class="screen">${topbar()}<div class="scroll">`;
+  // stage scene header
+  html+=`<div class="stage"><div class="side l"></div><div class="side r"></div><div class="grass"></div>
+    <div class="b g">${BEAR_GUITAR}</div><div class="b s bounce">${BEAR_SINGER}</div><div class="b a">${BEAR_ACCORDION}</div></div>`;
+  html+=`<div class="hello"><div class="k">Ahoj, Jirko</div><div class="t">Finální opakování</div>
+    <div class="lead">Šest dní, každý den 4 lekce po 5 úkolech. Zopakuješ si všechno, co jsi dělal v Matice s medvědy.</div></div>`;
+  html+=`<div class="unit-banner" style="background:var(--green); box-shadow:0 4px 0 var(--green-d)">
+      <div><div class="u-sec">FINÁLNÍ OPAKOVÁNÍ</div><div class="u-name">6 dní · 120 úkolů</div></div>
+      <div class="book">🏆</div></div><div class="path">`;
+  const shift=[0,-1,-1.5,-1,0,1];   // multiples of --sx, which shrinks on narrow screens
+  DAYS.forEach((d,k)=>{
+    const sk=S.days[d.id], unlocked=isUnlocked(d.id);
+    const isCurrent=(d.id===current);
+    let cls='locked', inner='🔒';
+    if(unlocked && sk.crown>=1){ cls='done'; inner='✓'; }
+    else if(unlocked){ cls='current'; inner=esc(d.glyph); }
+    const sx=shift[k%shift.length];
+    const ring = isCurrent ? ringSvg(sk.lesson,LESSONS_PER_CROWN) : '';
+    const crown = (unlocked && sk.crown>=1) ? `<div class="crownbadge c${sk.crown}">👑${sk.crown>1?'<span style="font-size:11px">'+sk.crown+'</span>':''}</div>` : '';
+    const pop = (V.selected===d.id) ? startPop(d.id) : '';
+    html+=`<div class="node-row" style="transform:translateX(calc(var(--sx) * ${sx}))"><div class="node-wrap">
+      ${pop}
+      <button class="node ${cls}" ${unlocked?`data-act="open" data-arg="${d.id}"`:''}>${ring}${crown}${inner}</button>
+      <div class="node-name"><span class="dn">DEN ${d.n} · </span>${esc(d.name)}</div>
+    </div></div>`;
+  });
+  html+=`</div>`;
+  if(allDone()){
+    html+=`<div class="done-all"><div class="dt">🏆 Všech 6 dní hotových!</div>
+      <div class="ds">Zopakoval jsi celou matiku. Kterýkoli den můžeš projít znovu a sbírat další korunky.</div></div>`;
+  }
+  html+=`</div></div>`;
+  return html;
+}
+function startPop(id){
+  const d=D_BY_ID[id], sk=S.days[id];
+  const label = sk.crown>=1 ? 'PROCVIČIT +10 XP' : 'ZAČÍT +10 XP';
+  const sub = sk.crown>=1 ? ('Korunky: '+sk.crown+'/3 · lekce '+sk.lesson+'/'+LESSONS_PER_CROWN)
+                          : ('Lekce '+sk.lesson+'/'+LESSONS_PER_CROWN+' · 5 úkolů');
+  return `<div class="start-pop"><div class="pt">Den ${d.n} · ${esc(d.name)}</div>
+    <div class="pd">${esc(d.sub)}</div><div class="ps">${sub}</div>
+    <button class="btn" data-act="start" data-arg="${id}">${label}</button></div>`;
+}
+function ringSvg(done,total){
+  const pct=done/total; const r=41, c=2*Math.PI*r; const off=c*(1-pct);
+  return `<svg class="ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="${r}" fill="none" stroke="#f2c7a8" stroke-width="7"></circle>
+    <circle cx="50" cy="50" r="${r}" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"
+     stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 50 50)"></circle></svg>`;
+}
+function kicker(q){
+  if(q.disp==='expr') return 'Kolik je?';
+  if(q.disp==='pie') return 'Jakým zlomkem zapíšeš vybarvenou část?';
+  return '';
+}
+function renderLesson(){
+  const L=V.L, q=curQ(), d=D_BY_ID[L.topicId];
+  const barPct = ((L.qi + (L.phase==='feedback'?1:0))/L.questions.length*100);
+  let body='';
+  // lessons mix topics, so every question says which topic it is and carries its own hint
+  body+=`<div class="chiprow"><div class="chip">${esc(q.name)}</div>
+    <div class="daytag">Den ${d.n} · lekce ${Math.min(S.days[d.id].lesson+1,LESSONS_PER_CROWN)}/${LESSONS_PER_CROWN}</div></div>`;
+  const kk=kicker(q);
+  if(kk) body+=`<div class="kicker">${esc(kk)}</div>`;
+  body+=`<div class="qbear"><div class="bh">${BEAR_SINGER}</div><div class="bubble">${esc(q.hint)}</div></div>`;
+  // prompt
+  if(q.disp==='pie') body+=`<svg class="pie" viewBox="0 0 100 100" width="168" height="168">${q.pie}</svg>`;
+  else if(q.disp==='prose') body+=`<div class="qprose">${esc(q.text)}</div>`;
+  else if(q.disp==='word') body+=`<div class="qword">${esc(q.text)}</div>`;
+  else body+=`<div class="qexpr">${esc(q.text)}</div>`;
+  // answer input
+  if(q.ans==='choice'){
+    body+=`<div class="tiles">`+q.options.map(o=>`<div class="tile ${L.choiceSel===o?'sel':''}" data-act="choose" data-arg="${o}">${fmt(o)}</div>`).join('')+`</div>`;
+  } else if(q.ans==='frac'){
+    body+=`<div class="frac">
+      <div class="field ${L.activeField==='num'?'act':''}" data-act="field" data-arg="num">${L.input||'?'}</div>
+      <div class="fbar"></div>
+      <div class="field ${L.activeField==='den'?'act':''}" data-act="field" data-arg="den">${L.input2||'?'}</div></div>`;
+  } else if(q.ans==='pair'){
+    body+=`<div class="pair">
+      <div class="col"><div class="field ${L.activeField==='num'?'act':''}" data-act="field" data-arg="num">${L.input||'?'}</div><div class="lab">${esc(q.label1)}</div></div>
+      <div class="col"><div class="field ${L.activeField==='den'?'act':''}" data-act="field" data-arg="den">${L.input2||'?'}</div><div class="lab">${esc(q.label2)}</div></div></div>`;
+  } else {
+    body+=`<div class="ansbox">${L.input?fmt(parseInt(L.input,10)):'?'}</div>`;
+  }
+  // keypad (not for choice)
+  if(q.ans!=='choice'){
+    let keys='';
+    for(let d=1;d<=9;d++) keys+=`<div class="key" data-act="key" data-arg="${d}">${d}</div>`;
+    keys+=`<div class="key" data-act="clear">C</div><div class="key" data-act="key" data-arg="0">0</div><div class="key" data-act="back">⌫</div>`;
+    body+=`<div class="pad">${keys}</div>`;
+  }
+  // footer or feedback
+  let foot;
+  if(L.phase==='feedback'){
+    const f=L.feedback, last=(L.qi+1>=L.questions.length);
+    foot=`<div class="sheet ${f.ok?'good':'bad'}">
+      <div class="st">${f.ok?'✓ Výborně!':'✕ Skoro!'}</div>
+      ${f.ok?'':`<div class="sol">Správně: <b>${esc(f.correct)}</b></div>`}
+      <button class="btn ${f.ok?'':'red'}" data-act="cont">${last?'DOKONČIT':'POKRAČOVAT'}</button></div>`;
+  } else {
+    const ok=canCheck();
+    foot=`<div class="footer"><button class="btn ${ok?'':'grey'}" ${ok?'data-act="check"':''}>ZKONTROLOVAT</button></div>`;
+  }
+  return `<div class="screen">
+    <div class="lhead"><div class="quit" data-act="quit">✕</div>
+      <div class="pbar"><i style="width:${barPct}%"></i></div>
+      <div class="stat heart">❤️<span class="n">${S.hearts.count}</span></div></div>
+    <div class="lbody">${body}</div>${foot}</div>`;
+}
+
+function renderComplete(){
+  const C=V.C;
+  let conf='<div class="confetti">';
+  const cols=['#58cc02','#ffc800','#1cb0f6','#e8732a','#ff4b4b'];
+  for(let i=0;i<50;i++){ const l=Math.random()*100, dur=(1.8+Math.random()*1.4).toFixed(2), del=(Math.random()*0.5).toFixed(2), rot=Math.floor(Math.random()*360);
+    conf+=`<span style="left:${l.toFixed(1)}%; background:${cols[i%5]}; animation-duration:${dur}s; animation-delay:${del}s; transform:rotate(${rot}deg)"></span>`; }
+  conf+='</div>';
+  const crownBlock = C.crownUp
+    ? `<div class="crown-pop">${C.allDone?'🏆':'👑'}</div><div class="cel-sub">${C.allDone?'Celé opakování hotové! ':''}Den ${C.day.n} — ${esc(C.day.name)} — máš hotový! (${C.crown}/3 👑)</div>`
+    : `<div class="cel-sub">Den ${C.day.n} · ${esc(C.day.name)} — medvědi tančí radostí 🎉</div>`;
+  return `<div class="screen"><div class="celebrate">${conf}
+    ${C.crownUp?'':`<div class="cel-bear">${BEAR_SINGER}</div>`}
+    <div class="cel-title">${C.crownUp?'Den hotový!':'Lekce hotová!'}</div>
+    ${crownBlock}
+    <div class="cel-stats">
+      <div class="cel-card g"><div class="in"><div class="lab">XP</div><div class="val">⚡ ${C.xp}</div></div></div>
+      <div class="cel-card o"><div class="in"><div class="lab">SÉRIE</div><div class="val">🔥 ${C.streak}</div></div></div>
+      <div class="cel-card b"><div class="in"><div class="lab">ÚSPĚŠNOST</div><div class="val">${C.acc} %</div></div></div>
+    </div></div>
+    <div class="footer"><button class="btn" data-act="home">POKRAČOVAT</button></div></div>`;
+}
+
+function render(){
+  const app=document.getElementById('app');
+  let html='';
+  if(V.screen==='path') html=renderPath();
+  else if(V.screen==='lesson') html=renderLesson();
+  else if(V.screen==='complete') html=renderComplete();
+  app.innerHTML=html;
+}
+
+// ===================== events ==============================================
+document.getElementById('app').addEventListener('click', e=>{
+  const el=e.target.closest('[data-act]'); if(!el) return;
+  const act=el.getAttribute('data-act'), arg=el.getAttribute('data-arg');
+  switch(act){
+    case 'snd': S.settings.sound=!S.settings.sound; save(); render(); break;
+    case 'open': ac(); V.selected=(V.selected===arg?null:arg); render(); break;
+    case 'start': startLesson(arg); break;
+    case 'quit': quitLesson(); break;
+    case 'key': if(V.L.phase!=='answering')break; { const q=curQ(); const k=(V.L.activeField==='den'&&(q.ans==='frac'||q.ans==='pair'))?'input2':'input';
+        if((V.L[k]||'').length<7){ V.L[k]=(V.L[k]||'')+arg; sndTap(); render(); } } break;
+    case 'back': if(V.L.phase!=='answering')break; { const q=curQ(); const k=(V.L.activeField==='den'&&(q.ans==='frac'||q.ans==='pair'))?'input2':'input';
+        V.L[k]=(V.L[k]||'').slice(0,-1); render(); } break;
+    case 'clear': if(V.L.phase!=='answering')break; { const q=curQ(); const k=(V.L.activeField==='den'&&(q.ans==='frac'||q.ans==='pair'))?'input2':'input';
+        V.L[k]=''; render(); } break;
+    case 'field': if(V.L.phase!=='answering')break; V.L.activeField=arg; render(); break;
+    case 'choose': if(V.L.phase!=='answering')break; V.L.choiceSel=parseInt(arg,10); sndTap(); render(); break;
+    case 'check': doCheck(); break;
+    case 'cont': afterFeedback(); break;
+    case 'home': V.C=null; V.screen='path'; render(); break;
+  }
+});
+
+// ===================== boot ================================================
+rolloverDaily();
+maybeResume();
+render();
+</script>
+</body>
+</html>

@@ -3,13 +3,13 @@
 ## Goal
 
 Rebuild the single-file math-practice web app so it looks and feels like
-Duolingo, for one kid (Jirka). Keep the existing 13 math topics and their
+Duolingo, for one kid. Keep the existing 13 math topics and their
 verified question generators; wrap them in a gamified path/lesson UI with the
 existing bear band as mascots.
 
 ## Constraints
 
-- **Single self-contained file** `Matika-Jirka.html` — vanilla HTML/CSS/JS, no
+- **Single self-contained file** `Matika.html` — vanilla HTML/CSS/JS, no
   framework, no build step, no network. Replaces the old `dc-runtime` bundle.
   (Old file is backed up before replacement.)
 - Served from GitHub Pages at the **same URL**; offline; progress in

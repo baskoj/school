@@ -1,6 +1,6 @@
 # Matika s medvědy
 
-Single-file, offline, Duolingo-style math-practice web apps for one kid (Jirka),
+Single-file, offline, Duolingo-style math-practice web apps for one kid,
 in Czech, themed around a bear band ("medvědí kapela"). Open one, walk the
 learning path, complete short lessons, earn crowns, keep a streak.
 
@@ -8,15 +8,15 @@ Two apps live here — a course and a final revision built on top of it:
 
 | File | What it is | Live |
 | --- | --- | --- |
-| `Matika-Jirka.html` | The course. Thirteen topics, one path node each. | <https://baskoj.github.io/school/Matika-Jirka.html> |
-| `Matika-Jirka01.html` | The final revision. Six days, topics mixed into every lesson. | <https://baskoj.github.io/school/Matika-Jirka01.html> |
+| `Matika.html` | The course. Thirteen topics, one path node each. | <https://baskoj.github.io/school/Matika.html> |
+| `Matika-opakovani.html` | The final revision. Six days, topics mixed into every lesson. | <https://baskoj.github.io/school/Matika-opakovani.html> |
 
 Both run offline in any modern browser: no server, no build step, no network —
 markup, styles, logic, bear artwork and sounds all live in the one file.
 Progress is saved in the browser's `localStorage`, under a **separate key per
 app**, so playing one never disturbs the other.
 
-## Matika-Jirka.html — the course
+## Matika.html — the course
 
 Thirteen math topics (whole Czech 4th-grade arithmetic), grouped into four
 units on the path:
@@ -31,7 +31,7 @@ units on the path:
 Each topic is a path node holding 4 lessons of 5 questions — 20 tasks per
 crown. State lives under `matika_v2`.
 
-## Matika-Jirka01.html — the six-day final revision
+## Matika-opakovani.html — the six-day final revision
 
 The same course, replayed as a **six-day plan** once every topic has been
 learned. The path has six day nodes instead of thirteen topic nodes, and each
@@ -95,7 +95,7 @@ JavaScript, no framework and no build step. Structure inside each:
 - The **bear band** is inline SVG (guitar, accordion, singer).
 - **Question generators** (`GEN`) produce the 13 topics' questions, each
   returning a display kind (`pie/expr/prose/word`) and an answer kind
-  (`single/frac/pair/choice`). `Matika-Jirka01.html` carries them over verbatim.
+  (`single/frac/pair/choice`). `Matika-opakovani.html` carries them over verbatim.
 - State persists to `localStorage` (XP, streak, hearts, daily goal, per-node
   crown/lesson progress, settings, and a resumable lesson session).
 
